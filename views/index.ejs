@@ -16,45 +16,40 @@
         </button>
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
           <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" href="/addProduct">Add new product</a>
-            </li> 
+            <% if (!user) {%>
+                <li class="nav-item">
+                    <a class="nav-link" href="/register">Register</a>
+                </li> 
+                <li class="nav-item">
+                    <a class="nav-link" href="/Login">Login</a>
+                </li> 
+            <% } else { %>
+                <li class="nav-item">
+                    <a class="nav-link" href="/Logout">Logout</a>
+                </li> 
+            <% } %>
           </ul>
         </div>
       </div>
     </nav>
-  <div class="container">
-    <br>
-    <div class="text-center"><h2>Products from Supermarket App Database</h2></div>
-    <br>
-  
-    <table class="table table-hover small text-center">
-      <thead>
-          <tr>
-            <th width="100">Product Name</th>
-            <th width="100">Product Image</th>
-            <th width="50">Quantity</th>
-            <th width="50">Price</th>
-            <th width="50">Edit</th>
-            <th width="50">Delete</th>
-          </tr>
-      </thead>
-      <tbody>
-        <% for(let i=0; i < products.length; i++) { %>
-          <tr>
-            <td><a href="/product/<%= products[i].productId %>"><%= products[i].productName %></a></td>
-            <td><img src="images/<%= products[i].image %>" width="20%"></td>
-            <td><%= products[i].quantity %></td>
-            <td>$<%= products[i].price.toFixed(2) %></td>
-            
-            <!-- Edit Link -->
-            <td><a href="/editProduct/<%= products[i].productId %>">Edit</a></td>
-            <!-- Delete Link -->
-            <td><a href="/deleteProduct/<%= products[i].productId %>" onclick="return confirm('Are you sure you want to delete this product?')">Delete</a></td>
-          </tr>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+
+    <div class="container">
+        <p style="text-align: center;">
+            <% if (user) {%>
+              <% if (user.role === "admin") { %>
+                <br>
+                Back to <a href="/inventory">inventory!</a>
+              <% } else { %>
+                <br>
+                Continue <a href="/shopping">Shopping!</a>
+                <% } %>
+            <% } else { %>
+            <br>
+            Welcome to supermarket app! <br>
+            Please <a href = "/login" >login</a> to continue...
+            <% } %>
+        </p>
+        
+    </div>
 </body>
 </html>
