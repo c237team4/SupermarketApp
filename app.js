@@ -1,6 +1,21 @@
 const express = require('express');
 const mysql = require('mysql2');
+const multer = require('multer');
 const app = express();
+
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+destination: (req, file, cb) => {
+cb(null, 'public/images'); // Directory to save uploaded files
+},
+filename: (req, file, cb) => {
+cb(null, file.originalname);
+}
+});
+const upload = multer({ storage: storage });
+
+
 // Create MySQL connection
 const connection = mysql.createConnection({
 host: 'Localhost',
@@ -64,9 +79,17 @@ app.get('/product/:id', (req, res) => {
 app.get('/addProduct', (req, res) => {
 res.render('addProduct');
 });
-app.post('/addProduct', (req, res) => {
+app.post('/addProduct', upload.single('image'), (req, res) => {
+
+
 // Extract product data from the request body
-const { name, quantity, price, image } = req.body;
+const { name, quantity, price } = req.body;
+let image;
+if (req.file) {
+image = req.file.filename; // Save only the filename
+} else {
+image = null;
+}
 const sql = 'INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)';
 // Insert the new product into the database
 connection.query( sql , [name, quantity, price, image], (error, results) => {
@@ -80,6 +103,65 @@ res.redirect('/');
 }
 });
 });
+
+app.get('/editProduct/:id', (req,res) => {
+    const productId = req.params.id;
+    const sql = 'SELECT * FROM products WHERE productId = ?';
+    // Fetch data from MySQL based on the product ID
+    connection.query( sql , [productId], (error, results) => {
+    if (error) {
+    console.error('Database query error:', error.message);
+    return res.send('Error retrieving product by ID');
+    }
+    // Check if any product with the given ID was found
+    if (results.length > 0) {
+    // Render HTML page with the product data
+    res.render('editProduct', { product: results[0] });
+    } else {
+    // If no product with the given ID was found, render a 404 page or handle it accordingly
+    res.send('Product not found');
+    }
+    });
+    });
+
+    app.post('/editProduct/:id',  upload.single('image'), (req, res) => {
+        const productId = req.params.id;
+        // Extract product data from the request body
+        const { name, quantity, price } = req.body;
+        let image = req.body.currentImage; //retrieve current image filename
+        if (req.file) { //if new image is uploaded
+        image = req.file.filename; // set image to be new image filename
+        }
+
+        const sql = 'UPDATE products SET productName = ? , quantity = ?, price = ? image =? HERE productId = ?';
+
+        // Insert the new product into the database
+        connection.query( sql , [name, quantity, price, image, productId], (error, results) => {
+        if (error) {
+        // Handle any error that occurs during the database operation
+        console.error("Error updating product:", error);
+        res.send('Error updating product');
+        } else {
+        // Send a success response
+        res.redirect('/');
+        }
+        });
+        });
+
+    app.get('/deleteProduct/:id', (req, res) => {
+            const productId = req.params.id;
+            const sql = 'DELETE FROM products WHERE productId = ?';
+            connection.query( sql , [productId], (error, results) => {
+            if (error) {
+            // Handle any error that occurs during the database operation
+            console.error("Error deleting product:", error);
+            res.send('Error deleting product');
+            } else {
+            // Send a success response
+            res.redirect('/');
+            }
+            });
+            });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
